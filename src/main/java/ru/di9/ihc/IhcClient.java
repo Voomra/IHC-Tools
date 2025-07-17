@@ -1,20 +1,31 @@
 package ru.di9.ihc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class IhcClient {
     private final String baseUrl;
     private final CloseableHttpClient httpClient;
     private final ObjectMapper mapper;
+
+    private boolean isAuth = false;
 
     public IhcClient(String baseUrl) {
         this.baseUrl = baseUrl;
@@ -34,9 +45,8 @@ public class IhcClient {
                 new BasicNameValuePair("ihccaptcha", "")
         )));
 
-        boolean authResult;
         try {
-            authResult = httpClient.execute(httpPost, resp -> {
+            isAuth = httpClient.execute(httpPost, resp -> {
                 if (resp.getCode() != 200) {
                     return false;
                 }
@@ -48,6 +58,36 @@ public class IhcClient {
             throw new RuntimeException(e);
         }
 
-        return authResult;
+        return isAuth;
+    }
+
+    public List<Pair<Integer, String>> getDomains() {
+        if (!isAuth) {
+            throw new RuntimeException("IS NOT AUTH");
+        }
+
+        HttpGet httpGet = new HttpGet(URI.create("%s/dnsZone/list".formatted(baseUrl)));
+        httpGet.setHeader("Accept", "text/html");
+
+        try {
+            return httpClient.execute(httpGet, resp -> {
+                if (resp.getCode() != 200) {
+                    return Collections.emptyList();
+                }
+
+                List<Pair<Integer, String>> list = new ArrayList<>();
+                Document document = Jsoup.parse(resp.getEntity().getContent(), StandardCharsets.UTF_8.name(), baseUrl);
+                Elements elements = document.select("li[class='zoneList__zone'] a");
+                for (Element element : elements) {
+                    Integer id = Integer.valueOf(element.attr("href").substring(1).split("/")[2]);
+                    String domain = element.text();
+                    list.add(Pair.of(id, domain));
+                }
+
+                return list;
+            });
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
