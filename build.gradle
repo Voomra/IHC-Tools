@@ -27,6 +27,7 @@ ext {
 }
 
 dependencies {
+    implementation("org.apache.httpcomponents.client5:httpclient5:5.5")
     implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
 
     testImplementation(platform("org.junit:junit-bom:$junitVersion"))

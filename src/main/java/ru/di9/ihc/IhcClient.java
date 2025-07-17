@@ -1,85 +1,53 @@
 package ru.di9.ihc;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
 
 import java.io.IOException;
-import java.net.CookieManager;
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
+import java.util.List;
 
 public class IhcClient {
     private final String baseUrl;
-    private final HttpClient httpClient;
+    private final CloseableHttpClient httpClient;
     private final ObjectMapper mapper;
 
     public IhcClient(String baseUrl) {
         this.baseUrl = baseUrl;
-
-        this.httpClient = HttpClient.newBuilder()
-                .version(HttpClient.Version.HTTP_2)
-                .connectTimeout(Duration.ofSeconds(10))
-                .cookieHandler(new CookieManager())
-                .build();
-
+        this.httpClient = HttpClientBuilder.create().build();
         this.mapper = new ObjectMapper();
     }
 
     public boolean auth(String login, String password) {
-        var request = HttpRequest.newBuilder()
-                .POST(HttpRequest.BodyPublishers.ofString(
-                        "j_username=%s&j_password=%s&recaptcha=&ihccaptcha=".formatted(login, password)
-                ))
-                .uri(URI.create("%s/j_spring_security_check?ajax=true".formatted(baseUrl)))
-                .setHeader("Accept", "application/json")
-                .setHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-                .setHeader("Referer", "%s/login/auth".formatted(baseUrl))
-                .build();
+        HttpPost httpPost = new HttpPost(URI.create("%s/j_spring_security_check?ajax=true".formatted(baseUrl)));
+        httpPost.setHeader("Accept", "application/json");
+        httpPost.setHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+        httpPost.setHeader("Referer", "%s/login/auth".formatted(baseUrl));
+        httpPost.setEntity(new UrlEncodedFormEntity(List.of(
+                new BasicNameValuePair("j_username", login),
+                new BasicNameValuePair("j_password", password),
+                new BasicNameValuePair("recaptcha", ""),
+                new BasicNameValuePair("ihccaptcha", "")
+        )));
 
-        HttpResponse<String> response;
+        boolean authResult;
         try {
-            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (IOException | InterruptedException e) {
+            authResult = httpClient.execute(httpPost, resp -> {
+                if (resp.getCode() != 200) {
+                    return false;
+                }
+
+                AuthResponse authResponse = mapper.readValue(resp.getEntity().getContent(), AuthResponse.class);
+                return "none".equalsIgnoreCase(authResponse.alert().type());
+            });
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
-        if (response.statusCode() != 200) {
-            return false;
-        }
-
-        AuthResponse authResponse;
-        try {
-            String json = response.body();
-            authResponse = mapper.readValue(json, AuthResponse.class);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-
-        return "none".equalsIgnoreCase(authResponse.alert().type());
-    }
-
-    public void getDomainList() {
-        var request = HttpRequest.newBuilder()
-                .GET()
-                .uri(URI.create("%s/dnsZone/list".formatted(baseUrl)))
-                .setHeader("Accept", "application/json")
-                .build();
-
-        HttpResponse<String> response;
-        try {
-            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
-        if (response.statusCode() != 200) {
-            throw new RuntimeException("not 200");
-        }
-
-        String body = response.body();
-        System.out.println(body);
+        return authResult;
     }
 }
