@@ -16,9 +16,7 @@ import org.jsoup.select.Elements;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class IhcClient {
     private final String baseUrl;
@@ -84,6 +82,47 @@ public class IhcClient {
                     list.add(Pair.of(domain, id));
                 }
 
+                return list;
+            });
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public List<DomainRecord> getDomainRecords(int domainId) {
+        if (!isAuth) {
+            throw new RuntimeException("IS NOT AUTH");
+        }
+
+        HttpPost httpPost = new HttpPost(URI.create("%s/dnsZone/records".formatted(baseUrl)));
+        httpPost.setHeader("Accept", "application/json");
+        httpPost.setHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+        httpPost.setHeader("Referer", "%s/dnsZone/index/%d".formatted(baseUrl, domainId));
+        httpPost.setEntity(new UrlEncodedFormEntity(List.of(
+                new BasicNameValuePair("id", String.valueOf(domainId))
+        )));
+
+        try {
+            return httpClient.execute(httpPost, resp -> {
+                if (resp.getCode() != 200) {
+                    return Collections.emptyList();
+                }
+
+                DomainRecordsResponse response = mapper.readValue(resp.getEntity().getContent(), DomainRecordsResponse.class);
+                List<DomainRecord> list = new ArrayList<>();
+
+                for (DomainRecordsResponse.Record rec : response.data().records()) {
+                    list.add(new DomainRecord(
+                            rec.id(),
+                            rec.readOnly(),
+                            rec.name(),
+                            RecordType.valueOf(rec.type()),
+                            rec.content(),
+                            rec.prio()
+                    ));
+                }
+
+                list.sort(Comparator.comparingInt(DomainRecord::getId));
                 return list;
             });
         } catch (IOException e) {

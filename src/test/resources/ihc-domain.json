@@ -1,0 +1,72 @@
+{
+  "alert": {
+    "type": "none",
+    "message": ""
+  },
+  "data": {
+    "errors": [],
+    "messages": [],
+    "domain": {
+      "name": "example-1.ru",
+      "id": 111111
+    },
+    "records": [
+      {
+        "readOnly": true,
+        "id": 7000001,
+        "name": "",
+        "type": "SOA",
+        "content": "ns1.ihc.ru. info.ihc.ru. 2014120801 10800 3600 604800 3600",
+        "prio": null
+      },
+      {
+        "readOnly": true,
+        "id": 7000002,
+        "name": "",
+        "type": "NS",
+        "content": "ns1.ihc.ru",
+        "prio": null
+      },
+      {
+        "readOnly": true,
+        "id": 7000003,
+        "name": "",
+        "type": "NS",
+        "content": "ns2.ihc.ru",
+        "prio": null
+      },
+      {
+        "readOnly": false,
+        "id": 7000004,
+        "name": "yamail-XXXXXXXXXXXX",
+        "type": "CNAME",
+        "content": "mail.yandex.ru",
+        "prio": null
+      },
+      {
+        "readOnly": false,
+        "id": 7000005,
+        "name": "",
+        "type": "MX",
+        "content": "mx.yandex.ru",
+        "prio": 10
+      },
+      {
+        "readOnly": false,
+        "id": 7000006,
+        "name": "",
+        "type": "A",
+        "content": "127.0.0.1",
+        "prio": null
+      },
+      {
+        "readOnly": false,
+        "id": 7000007,
+        "name": "_acme-challenge",
+        "type": "TXT",
+        "content": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "prio": null
+      }
+    ]
+  }
+}
