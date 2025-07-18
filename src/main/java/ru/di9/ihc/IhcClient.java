@@ -61,7 +61,7 @@ public class IhcClient {
         return isAuth;
     }
 
-    public List<Pair<Integer, String>> getDomains() {
+    public List<Pair<String, Integer>> getDomains() {
         if (!isAuth) {
             throw new RuntimeException("IS NOT AUTH");
         }
@@ -75,13 +75,13 @@ public class IhcClient {
                     return Collections.emptyList();
                 }
 
-                List<Pair<Integer, String>> list = new ArrayList<>();
+                List<Pair<String, Integer>> list = new ArrayList<>();
                 Document document = Jsoup.parse(resp.getEntity().getContent(), StandardCharsets.UTF_8.name(), baseUrl);
                 Elements elements = document.select("li[class='zoneList__zone'] a");
                 for (Element element : elements) {
                     Integer id = Integer.valueOf(element.attr("href").substring(1).split("/")[2]);
                     String domain = element.text();
-                    list.add(Pair.of(id, domain));
+                    list.add(Pair.of(domain, id));
                 }
 
                 return list;

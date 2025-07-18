@@ -50,10 +50,10 @@ class GetDomainsTest {
 
         var ihc = new IhcClient("http://localhost:%d".formatted(port));
         ihc.auth("user1", "passwd1");
-        List<Pair<Integer, String>> domains = ihc.getDomains();
+        List<Pair<String, Integer>> domains = ihc.getDomains();
 
         assertEquals(2, domains.size());
-        assertEquals(Pair.of(111111, "example-1.ru"), domains.get(0));
-        assertEquals(Pair.of(222222, "example-2.ru"), domains.get(1));
+        assertEquals(Pair.of("example-1.ru", 111111), domains.get(0));
+        assertEquals(Pair.of("example-2.ru", 222222), domains.get(1));
     }
 }
