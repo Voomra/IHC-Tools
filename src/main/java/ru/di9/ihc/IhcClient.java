@@ -1,7 +1,6 @@
 package ru.di9.ihc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
@@ -16,7 +15,10 @@ import org.jsoup.select.Elements;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class IhcClient {
     private final String baseUrl;
@@ -59,7 +61,7 @@ public class IhcClient {
         return isAuth;
     }
 
-    public List<Pair<String, Integer>> getDomains() {
+    public List<Domain> getDomains() {
         if (!isAuth) {
             throw new RuntimeException("IS NOT AUTH");
         }
@@ -73,13 +75,19 @@ public class IhcClient {
                     return Collections.emptyList();
                 }
 
-                List<Pair<String, Integer>> list = new ArrayList<>();
+                List<Domain> list = new ArrayList<>();
                 Document document = Jsoup.parse(resp.getEntity().getContent(), StandardCharsets.UTF_8.name(), baseUrl);
                 Elements elements = document.select("li[class='zoneList__zone'] a");
                 for (Element element : elements) {
-                    Integer id = Integer.valueOf(element.attr("href").substring(1).split("/")[2]);
-                    String domain = element.text();
-                    list.add(Pair.of(domain, id));
+                    int id = Integer.parseInt(element.attr("href").substring(1).split("/")[2]);
+                    String name = element.text();
+                    String punycode = null;
+                    if (name.contains(" (")) {
+                        String[] split = name.split(" \\(", 2);
+                        name = split[0];
+                        punycode = split[1].substring(0, split[1].length() - 1);
+                    }
+                    list.add(new Domain(id, name, punycode));
                 }
 
                 return list;

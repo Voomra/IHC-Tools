@@ -4,7 +4,6 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -50,10 +49,11 @@ class GetDomainsTest {
 
         var ihc = new IhcClient("http://localhost:%d".formatted(port));
         ihc.auth("user1", "passwd1");
-        List<Pair<String, Integer>> domains = ihc.getDomains();
+        List<Domain> domains = ihc.getDomains();
 
-        assertEquals(2, domains.size());
-        assertEquals(Pair.of("example-1.ru", 111111), domains.get(0));
-        assertEquals(Pair.of("example-2.ru", 222222), domains.get(1));
+        assertEquals(3, domains.size());
+        assertEquals(new Domain(111111, "example-1.ru", null), domains.get(0));
+        assertEquals(new Domain(222222, "example-2.ru", null), domains.get(1));
+        assertEquals(new Domain(333333, "пример-3.рф", "xn---3-mlcluqhd.xn--p1ai"), domains.get(2));
     }
 }
