@@ -51,8 +51,8 @@ class GetDomainRecordsTest {
 
         var ihc = new IhcClient("http://localhost:%d".formatted(port));
         ihc.auth("user1", "passwd1");
-        int domainId = ihc.getDomains().getFirst().id();
-        List<DomainRecord> domainRecords = ihc.getDomainRecords(domainId);
+        Domain domain = ihc.getDomains().getFirst();
+        List<DomainRecord> domainRecords = ihc.getDomainRecords(domain);
 
         assertEquals(7, domainRecords.size());
 

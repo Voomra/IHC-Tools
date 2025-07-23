@@ -34,7 +34,7 @@ public class IhcClient {
     }
 
     public boolean auth(String login, String password) {
-        HttpPost httpPost = new HttpPost(URI.create("%s/j_spring_security_check?ajax=true".formatted(baseUrl)));
+        var httpPost = new HttpPost(URI.create("%s/j_spring_security_check?ajax=true".formatted(baseUrl)));
         httpPost.setHeader("Accept", "application/json");
         httpPost.setHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
         httpPost.setHeader("Referer", "%s/login/auth".formatted(baseUrl));
@@ -97,7 +97,7 @@ public class IhcClient {
         }
     }
 
-    public List<DomainRecord> getDomainRecords(int domainId) {
+    public List<DomainRecord> getDomainRecords(Domain domain) {
         if (!isAuth) {
             throw new RuntimeException("IS NOT AUTH");
         }
@@ -105,9 +105,9 @@ public class IhcClient {
         HttpPost httpPost = new HttpPost(URI.create("%s/dnsZone/records".formatted(baseUrl)));
         httpPost.setHeader("Accept", "application/json");
         httpPost.setHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
-        httpPost.setHeader("Referer", "%s/dnsZone/index/%d".formatted(baseUrl, domainId));
+        httpPost.setHeader("Referer", "%s/dnsZone/index/%d".formatted(baseUrl, domain.id()));
         httpPost.setEntity(new UrlEncodedFormEntity(List.of(
-                new BasicNameValuePair("id", String.valueOf(domainId))
+                new BasicNameValuePair("id", String.valueOf(domain.id()))
         )));
 
         try {
@@ -132,6 +132,36 @@ public class IhcClient {
 
                 list.sort(Comparator.comparingInt(DomainRecord::getId));
                 return list;
+            });
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void updateDomainRecord(Domain domain, DomainRecord domainRecord) {
+        if (!isAuth) {
+            throw new RuntimeException("IS NOT AUTH");
+        }
+
+        var httpPost = new HttpPost(URI.create("%s/dnsZone/updateRecord".formatted(baseUrl)));
+        httpPost.setHeader("Accept", "application/json");
+        httpPost.setHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+        httpPost.setHeader("Referer", "%s/dnsZone/index/%d".formatted(baseUrl, domain.id()));
+        httpPost.setHeader("X-Requested-With", "XMLHttpRequest");
+        httpPost.setEntity(new UrlEncodedFormEntity(List.of(
+                new BasicNameValuePair("name", domainRecord.getName()),
+                new BasicNameValuePair("content", domainRecord.getContent()),
+                new BasicNameValuePair("id", String.valueOf(domain.id())),
+                new BasicNameValuePair("recordId", String.valueOf(domainRecord.getId())),
+                new BasicNameValuePair("type", domainRecord.getType().name())
+        )));
+
+        try {
+            httpClient.execute(httpPost, resp -> {
+                if (resp.getCode() != 200) {
+                    throw new RuntimeException(resp.toString());
+                }
+                return null;
             });
         } catch (IOException e) {
             throw new RuntimeException(e);
