@@ -9,7 +9,7 @@ wrapper {
 }
 
 java.toolchain {
-    languageVersion = JavaLanguageVersion.of(21)
+    languageVersion = JavaLanguageVersion.of(17)
 }
 
 group = "ru.di9"
