@@ -196,4 +196,31 @@ public class IhcClient {
             throw new RuntimeException(e);
         }
     }
+
+    public void removeDomainRecord(Domain domain, int domainRecordId) {
+        if (!isAuth) {
+            throw new RuntimeException("IS NOT AUTH");
+        }
+
+        var httpPost = new HttpPost(URI.create("%s/dnsZone/deleteRecord".formatted(baseUrl)));
+        httpPost.setHeader("Accept", "application/json");
+        httpPost.setHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+        httpPost.setHeader("Referer", "%s/dnsZone/index/%d".formatted(baseUrl, domain.id()));
+        httpPost.setHeader("X-Requested-With", "XMLHttpRequest");
+        httpPost.setEntity(new UrlEncodedFormEntity(List.of(
+                new BasicNameValuePair("recordId", String.valueOf(domainRecordId)),
+                new BasicNameValuePair("id", String.valueOf(domain.id()))
+        )));
+
+        try {
+            httpClient.execute(httpPost, resp -> {
+                if (resp.getCode() != 200) {
+                    throw new RuntimeException(resp.toString());
+                }
+                return null;
+            });
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
