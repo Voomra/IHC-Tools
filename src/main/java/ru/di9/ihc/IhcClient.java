@@ -1,6 +1,7 @@
 package ru.di9.ihc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
@@ -26,6 +27,10 @@ public class IhcClient {
     private final ObjectMapper mapper;
 
     private boolean isAuth = false;
+
+    public IhcClient() {
+        this("https://my.ihc.ru");
+    }
 
     public IhcClient(String baseUrl) {
         this.baseUrl = baseUrl;
