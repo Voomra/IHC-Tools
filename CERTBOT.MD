@@ -1,7 +1,5 @@
 Данный инструмент будет полезен для автоматизации продления сертификатов **Let's Encrypt** (certbot).
 
-Для парсинга json ответов используется инструмент [jq](https://jqlang.github.io/jq/).
-
 ## certbot_auto.sh
 
 ```bash
@@ -12,7 +10,7 @@ certbot certonly \
     --preferred-challenges=dns \
     --manual-auth-hook /path/to/authenticator.sh \
     --manual-cleanup-hook /path/to/cleanup.sh \
-    -d 'example.com, *.example.com'
+    -d 'example-1.ru, *.example-1.ru'
 ```
 
 ## authenticator.sh
@@ -20,11 +18,12 @@ certbot certonly \
 ```bash
 #!/bin/bash
 
-bash /path/to/ihc-dns.sh \
-    --user 'me%40example.com' \
-    --password 's3cr3T' \
-    --domain 'example.com' \
-    --add --name '_acme-challenge' --type 'TXT' --content "$CERTBOT_VALIDATION"
+bash /path/to/ihc-dns domain-record add \
+    "example-1.ru" \
+    --name="_acme-challenge" \
+    --type="TXT" \
+    --content="$CERTBOT_VALIDATION"
+    --user='me@example.com' --password='s3cr3T'
 ```
 
 ## cleanup.sh
@@ -32,15 +31,8 @@ bash /path/to/ihc-dns.sh \
 ```bash
 #!/bin/bash
 
-V_RECORD=$(bash /path/to/ihc-dns.sh \
-    --user 'me%40example.com' \
-    --password 's3cr3T' \
-    --domain 'example.com' \
-    --list | jq -r '. | select(.name == "_acme-challenge") | .id')
-
-bash /path/to/ihc-dns.sh \
-    --user 'me%40example.com' \
-    --password 's3cr3T' \
-    --domain 'example.com' \
-    --delete --record $V_RECORD
+bash /path/to/ihc-dns domain-record delete \
+    "example-1.ru" \
+    "_acme-challenge" \
+    --user='me@example.com' --password='s3cr3T'
 ```
