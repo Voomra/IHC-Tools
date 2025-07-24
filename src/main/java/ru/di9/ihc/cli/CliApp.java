@@ -13,7 +13,7 @@ import picocli.CommandLine;
                 DomainsListCommand.class,
                 DomainRecordCommand.class
         },
-        version = "1.0-SNAPSHOT")
+        version = "2.0")
 public class CliApp {
     @CommandLine.Option(names = {"-h", "--help"}, description = "Страница помощи", usageHelp = true)
     private boolean flagHelp;

@@ -13,7 +13,7 @@ java.toolchain {
 }
 
 group = "ru.di9"
-version = "1.0-SNAPSHOT"
+version = "2.0"
 
 repositories {
     mavenLocal()
